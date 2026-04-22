@@ -26,6 +26,13 @@ export const buildApp = () => {
   void app.register(postgresPlugin);
   void app.register(redisPlugin);
 
+  app.get("/", async () => {
+    return {
+      name: "Ingressofacil API",
+      status: "ok",
+    };
+  });
+
   void app.register(healthRoutes);
   void app.register(registerAuthRoutes, { prefix: "/auth" });
   void app.register(registerEventRoutes, { prefix: "/events" });
