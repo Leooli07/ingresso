@@ -1,10 +1,14 @@
-﻿import Fastify from "fastify";
+import Fastify from "fastify";
 import type { FastifyReply, FastifyRequest } from "fastify";
+import type { Pool } from "pg";
+import type Redis from "ioredis";
 
 import { env } from "./config/env.js";
 import { registerCors } from "./plugins/cors.js";
 import { registerJwt } from "./plugins/jwt.js";
-import { registerHealthRoutes } from "./routes/health.js";
+import postgresPlugin from "./plugins/postgres.js";
+import redisPlugin from "./plugins/redis.js";
+import { healthRoutes } from "./routes/health.js";
 import { registerAuthRoutes } from "./modules/auth/routes.js";
 import { registerEventRoutes } from "./modules/events/routes.js";
 import { registerSessionRoutes } from "./modules/sessions/routes.js";
@@ -19,8 +23,10 @@ export const buildApp = () => {
 
   void app.register(registerCors);
   void app.register(registerJwt);
+  void app.register(postgresPlugin);
+  void app.register(redisPlugin);
 
-  void app.register(registerHealthRoutes);
+  void app.register(healthRoutes);
   void app.register(registerAuthRoutes, { prefix: "/auth" });
   void app.register(registerEventRoutes, { prefix: "/events" });
   void app.register(registerSessionRoutes, { prefix: "/sessions" });
@@ -33,5 +39,7 @@ declare module "fastify" {
   interface FastifyInstance {
     config: typeof env;
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    pg: Pool;
+    redis: Redis;
   }
 }

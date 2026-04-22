@@ -1,7 +1,8 @@
-﻿import jwt from "@fastify/jwt";
+import jwt from "@fastify/jwt";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 
-export const registerJwt = async (app: FastifyInstance) => {
+const jwtPlugin = async (app: FastifyInstance) => {
   await app.register(jwt, {
     secret: app.config.JWT_SECRET,
   });
@@ -17,6 +18,8 @@ export const registerJwt = async (app: FastifyInstance) => {
     },
   );
 };
+
+export const registerJwt = fp(jwtPlugin);
 
 declare module "@fastify/jwt" {
   interface FastifyJWT {

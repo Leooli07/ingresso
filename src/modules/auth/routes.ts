@@ -33,7 +33,7 @@ export const registerAuthRoutes = async (app: FastifyInstance) => {
       });
     }
 
-    const token = await reply.jwtSign({
+    const token = await app.jwt.sign({
       sub: user.id,
       email: user.email,
       role: user.role,
