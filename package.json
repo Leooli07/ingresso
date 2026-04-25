@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
@@ -18,6 +19,7 @@
     "pg": "^8.12.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.7.4",
     "@types/pg": "^8.15.2",
     "tsx": "^4.19.1",

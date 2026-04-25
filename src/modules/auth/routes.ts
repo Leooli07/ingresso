@@ -1,42 +1,58 @@
-﻿import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 
-const demoUsers = [
-  {
-    id: "user-1",
-    email: "admin@ingressofacil.local",
-    password: "123456",
-    name: "Administrador",
-    role: "admin",
-  },
-];
+import { verifyPassword } from "../../utils/password.js";
 
-export const registerAuthRoutes = async (app: FastifyInstance) => {
-  app.post("/login", async (request, reply) => {
-    const body = request.body as {
-      email?: string;
-      password?: string;
-    };
+export async function authRoutes(app: FastifyInstance) {
+  app.post("/auth/login", async (req, reply) => {
+    const body = req.body as { email?: string; password?: string };
 
     if (!body?.email || !body?.password) {
       return reply.status(400).send({
-        message: "Email e password sao obrigatorios.",
+        error: "Email e senha sao obrigatorios",
       });
     }
 
-    const user = demoUsers.find(
-      (item) => item.email === body.email && item.password === body.password,
+    const result = await app.pg.query<{
+      id: string;
+      tenant_id: string;
+      name: string;
+      email: string;
+      password_hash: string;
+    }>(
+      `
+      SELECT
+        id,
+        tenant_id,
+        name,
+        email,
+        password_hash
+      FROM users
+      WHERE email = $1
+      LIMIT 1
+      `,
+      [body.email.toLowerCase()],
     );
+
+    const user = result.rows[0];
 
     if (!user) {
       return reply.status(401).send({
-        message: "Credenciais invalidas.",
+        error: "Credenciais invalidas",
       });
     }
 
-    const token = await app.jwt.sign({
-      sub: user.id,
+    const valid = await verifyPassword(body.password, user.password_hash);
+
+    if (!valid) {
+      return reply.status(401).send({
+        error: "Credenciais invalidas",
+      });
+    }
+
+    const token = app.jwt.sign({
+      userId: user.id,
+      tenantId: user.tenant_id,
       email: user.email,
-      role: user.role,
       name: user.name,
     });
 
@@ -44,20 +60,50 @@ export const registerAuthRoutes = async (app: FastifyInstance) => {
       token,
       user: {
         id: user.id,
-        email: user.email,
+        tenantId: user.tenant_id,
         name: user.name,
-        role: user.role,
+        email: user.email,
       },
     };
   });
 
   app.get(
-    "/me",
+    "/auth/me",
     {
-      preHandler: app.authenticate,
+      preHandler: [app.authenticate],
     },
-    async (request) => ({
-      user: request.user,
-    }),
+    async (req) => {
+      const result = await app.pg.query<{
+        id: string;
+        tenant_id: string;
+        name: string;
+        email: string;
+      }>(
+        `
+        SELECT id, tenant_id, name, email
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [req.user.userId],
+      );
+
+      const user = result.rows[0];
+
+      if (!user) {
+        return {
+          user: req.user,
+        };
+      }
+
+      return {
+        user: {
+          userId: user.id,
+          tenantId: user.tenant_id,
+          email: user.email,
+          name: user.name,
+        },
+      };
+    },
   );
-};
+}

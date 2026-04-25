@@ -14,4 +14,6 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET as string,
   DATABASE_URL: process.env.DATABASE_URL ?? "",
   REDIS_URL: process.env.REDIS_URL ?? "",
+  ASAAS_API_KEY: process.env.ASAAS_API_KEY ?? "",
+  ASAAS_BASE_URL: process.env.ASAAS_BASE_URL ?? "https://sandbox.asaas.com/api/v3",
 };

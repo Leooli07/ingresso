@@ -3,7 +3,7 @@ import pg from "pg";
 
 export default fp(async (app) => {
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: app.config.DATABASE_URL,
   });
 
   app.decorate("pg", pool);
